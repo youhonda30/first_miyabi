@@ -1,0 +1,51 @@
+name: Issue Agent - Auto Label & Analyze
+
+on:
+  issues:
+    types: [opened, edited, labeled, assigned]
+
+jobs:
+  analyze-issue:
+    name: Analyze & Label Issue
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run IssueAgent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          echo "Running IssueAgent for issue #$ISSUE_NUMBER"
+          # Agent implementation will go here
+          # For now, just log the event
+          echo "Issue: $ISSUE_TITLE"
+          echo "Event: ${{ github.event.action }}"
+
+      - name: Comment on issue
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🏷️ **IssueAgent** analyzed this issue and applied initial labels.\n\nNext: CoordinatorAgent will create an execution plan.'
+            })

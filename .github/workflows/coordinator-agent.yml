@@ -1,0 +1,79 @@
+name: Coordinator Agent - Task Planning
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to coordinate'
+        required: true
+
+jobs:
+  coordinate:
+    name: Create Execution Plan
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'state:pending')) ||
+      github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run CoordinatorAgent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+        run: |
+          echo "Running CoordinatorAgent for issue #$ISSUE_NUMBER"
+          # Agent implementation will go here
+          echo "Creating task breakdown and assigning agents..."
+
+      - name: Update issue
+        uses: actions/github-script@v6
+        env:
+          ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = parseInt(process.env.ISSUE_NUMBER);
+
+            // Add agent label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ['🤖 agent:coordinator', 'state:analyzing']
+            });
+
+            // Remove pending label
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                name: 'state:pending'
+              });
+            } catch (error) {
+              // Label might not exist
+            }
+
+            // Add comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: '🤖 **CoordinatorAgent** created execution plan.\n\nAgents assigned:\n- CodeGenAgent: Implementation\n- TestAgent: Test coverage\n- ReviewAgent: Code review\n\nState: `analyzing` → `implementing`'
+            });
