@@ -141,7 +141,6 @@ vite.config.ts.timestamp-*
 # Agentic OS
 # Dependencies
 node_modules/
-package-lock.json
 
 # Build output
 dist/
