@@ -1,0 +1,85 @@
+name: Deploy Agent - Auto Deployment
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Run DeploymentAgent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          echo "Running DeploymentAgent"
+          echo "Environment: production"
+          echo "Strategy: Blue-green deployment"
+          # Agent implementation will handle deployment
+
+      - name: Create deployment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'production',
+              description: 'Deployed by DeploymentAgent',
+              auto_merge: false,
+              required_contexts: []
+            });
+
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'success',
+              description: 'Deployment successful',
+              environment_url: 'https://your-app-url.com'
+            });
+
+      - name: Create release notes
+        if: github.event_name == 'push'
+        run: |
+          echo "## Release Notes" > release-notes.md
+          echo "" >> release-notes.md
+          echo "Deployed: $(date)" >> release-notes.md
+          echo "Commit: ${{ github.sha }}" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "### Changes" >> release-notes.md
+          git log --oneline --no-merges -10 >> release-notes.md
+          cat release-notes.md
