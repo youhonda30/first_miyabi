@@ -1,0 +1,351 @@
+// Prisma Schema for Personal Training Gym EC Site
+// Database: PostgreSQL
+// ORM: Prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// User & Authentication Models
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  phone         String?
+  password      String?   // For email/password auth
+  role          UserRole  @default(CUSTOMER)
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  orders        Order[]
+  cart          Cart?
+  reviews       Review[]
+  favorites     Favorite[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+}
+
+enum UserRole {
+  CUSTOMER
+  TRAINER
+  ADMIN
+}
+
+// NextAuth.js models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// Product & Course Models
+// ============================================
+
+model Product {
+  id          String         @id @default(cuid())
+  name        String
+  slug        String         @unique
+  description String         @db.Text
+  price       Decimal        @db.Decimal(10, 2)
+  stock       Int            @default(0)
+  category    ProductCategory
+  images      String[]       // Array of image URLs
+  tags        String[]
+  isActive    Boolean        @default(true)
+
+  // Relations
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  reviews     Review[]
+  favorites   Favorite[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([category])
+  @@index([slug])
+  @@index([isActive])
+}
+
+enum ProductCategory {
+  PROTEIN
+  SUPPLEMENT
+  GEAR
+  APPAREL
+  ACCESSORY
+}
+
+model Course {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String    @db.Text
+  price       Decimal   @db.Decimal(10, 2)
+  duration    Int       // Duration in minutes
+  capacity    Int       // Max participants
+  trainerId   String?
+  images      String[]
+  isActive    Boolean   @default(true)
+
+  // Relations
+  trainer     Trainer?  @relation(fields: [trainerId], references: [id])
+  bookings    Booking[]
+  reviews     Review[]
+  favorites   Favorite[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([trainerId])
+}
+
+model Trainer {
+  id          String   @id @default(cuid())
+  name        String
+  bio         String   @db.Text
+  specialties String[]
+  image       String?
+
+  // Relations
+  courses     Course[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================
+// Order & Payment Models
+// ============================================
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique @default(cuid())
+  userId          String
+
+  // Amounts
+  subtotal        Decimal       @db.Decimal(10, 2)
+  tax             Decimal       @db.Decimal(10, 2) @default(0)
+  shippingFee     Decimal       @db.Decimal(10, 2) @default(0)
+  total           Decimal       @db.Decimal(10, 2)
+
+  // Status
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+
+  // Shipping
+  shippingAddress Json?
+
+  // Payment (Stripe)
+  stripePaymentIntentId String?
+  stripeChargeId        String?
+
+  // Relations
+  user            User         @relation(fields: [userId], references: [id])
+  orderItems      OrderItem[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String
+
+  quantity    Int
+  price       Decimal @db.Decimal(10, 2)
+  subtotal    Decimal @db.Decimal(10, 2)
+
+  // Relations
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product @relation(fields: [productId], references: [id])
+
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Booking {
+  id              String         @id @default(cuid())
+  userId          String
+  courseId        String
+
+  scheduledAt     DateTime
+  status          BookingStatus  @default(PENDING)
+
+  // Payment
+  amount          Decimal        @db.Decimal(10, 2)
+  paymentStatus   PaymentStatus  @default(PENDING)
+  stripePaymentIntentId String?
+
+  // Relations
+  course          Course         @relation(fields: [courseId], references: [id])
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([courseId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================
+// Cart Model
+// ============================================
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+
+  quantity  Int      @default(1)
+
+  // Relations
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@index([productId])
+}
+
+// ============================================
+// Review & Favorite Models
+// ============================================
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String?
+  courseId  String?
+
+  rating    Int      // 1-5
+  comment   String   @db.Text
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([productId])
+  @@index([courseId])
+  @@index([rating])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String?
+  courseId  String?
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([productId])
+  @@index([courseId])
+}

@@ -10,7 +10,15 @@
     "test": "vitest",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "miyabi": "tsx src/index.ts"
+    "miyabi": "tsx src/index.ts",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [
     "agentic-os",
@@ -30,12 +38,16 @@
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.1",
     "postcss": "^8.5.6",
+    "prisma": "^7.2.0",
     "tailwindcss": "^4.1.18",
     "tsx": "^4.7.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@prisma/client": "^7.2.0",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.3",
     "next": "^16.1.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
