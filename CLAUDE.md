@@ -9,6 +9,86 @@ This project uses the **Miyabi** autonomous development framework with 7 special
 **Repository**: youhonda30/first_miyabi
 **Purpose**: AI-driven development automation with autonomous agents
 
+## Git/GitHub Configuration
+
+### SSH Configuration
+
+This project uses the **youhonda30** GitHub account.
+
+**SSH Host**: Use `github-youhonda30` configured in `~/.ssh/config`
+**SSH Key**: `~/.ssh/id_rsa_youhonda30` (configured in SSH config)
+
+**Git Remote URL Format**:
+```bash
+git@github-youhonda30:youhonda30/first_miyabi.git
+```
+
+**Setting up new branches**:
+```bash
+# Always use github-youhonda30 host for this repository
+git remote set-url origin git@github-youhonda30:youhonda30/first_miyabi.git
+git push -u origin <branch-name>
+```
+
+### GitHub CLI (gh) Configuration
+
+**Current Account**: ai247group (needs switching for this repo)
+
+**To use gh commands**:
+```bash
+# Option 1: Switch gh account to youhonda30
+gh auth login
+
+# Option 2: Use Web UI for PR creation
+# Recommended for this repository due to account mismatch
+```
+
+### Branch Strategy
+
+- **Main branch**: `main`
+- **Feature branches**: `feature/<issue-number>-<description>`
+- **Bugfix branches**: `bugfix/<issue-number>-<description>`
+- **All PRs** should target `main` branch
+
+## Technology Stack
+
+### Frontend
+- **Framework**: Next.js 16.1.1 (App Router)
+- **UI Library**: React 19
+- **Styling**: Tailwind CSS 4.1 (@tailwindcss/postcss)
+- **Language**: TypeScript 5.8
+
+### Development Tools
+- **Linter**: ESLint 9 with Next.js config
+- **Type Checker**: TypeScript strict mode
+- **Package Manager**: npm
+- **Testing**: Vitest with coverage
+
+### Build & Deploy
+- **Build Tool**: Next.js built-in (Turbopack)
+- **CI/CD**: GitHub Actions
+- **Target Platform**: Vercel / AWS (TBD)
+
+## Environment Variables
+
+See `.env.example` for required environment variables:
+
+**Miyabi Framework**:
+- `GITHUB_TOKEN`: GitHub API token (for agents)
+- `ANTHROPIC_API_KEY`: Claude API key (for AI agents)
+- `REPOSITORY`: Repository in format owner/repo
+
+**EC Site Application**:
+- `DATABASE_URL`: PostgreSQL connection string
+- `STRIPE_SECRET_KEY`: Stripe payment API key
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Stripe publishable key
+- `NEXTAUTH_URL`: Application URL
+- `NEXTAUTH_SECRET`: NextAuth.js secret key
+- `NEXT_PUBLIC_APP_URL`: Public application URL
+- `NEXT_PUBLIC_APP_NAME`: Application name
+
+**Note**: Never commit actual values. Use `.env.example` as template.
+
 ## Architecture
 
 ### 7 Autonomous Agents
