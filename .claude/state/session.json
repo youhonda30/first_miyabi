@@ -1,13 +1,13 @@
 {
-  "session_id": "e2158bb2-f928-4c9b-83bb-f0435c4f1708",
-  "started_at": "2026-01-03T14:29:01Z",
+  "session_id": "ecf91b4e-d116-43a9-8103-1fa1a2792a64",
+  "started_at": "2026-01-03T20:25:54Z",
   "cwd": "/home/honda/work/program/test/first_miyabi",
   "project_name": "first_miyabi",
-  "prompt_seq": 3,
+  "prompt_seq": 17,
   "git": {
     "branch": "main",
     "uncommitted_changes": 0,
-    "last_commit": "ba16a93"
+    "last_commit": "27c9699"
   },
   "plans": {
     "exists": false,
