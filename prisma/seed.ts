@@ -95,6 +95,7 @@ async function main() {
       },
     }),
     prisma.product.create({
+      data: {
         name: 'トレーニングウェア 上下セット',
         slug: 'training-wear-set',
         description: '吸汗速乾素材のトレーニングウェア。動きやすさを重視したデザイン。',
