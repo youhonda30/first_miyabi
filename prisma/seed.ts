@@ -167,7 +167,7 @@ async function main() {
   console.log('Created test user')
 
   // Create Admin User
-  const adminUser = await prisma.user.create({
+  const _adminUser = await prisma.user.create({
     data: {
       email: 'admin@example.com',
       name: '管理者',
@@ -179,7 +179,7 @@ async function main() {
   console.log('Created admin user')
 
   // Create Cart for test user
-  const cart = await prisma.cart.create({
+  const _cart = await prisma.cart.create({
     data: {
       userId: testUser.id,
       items: {
@@ -200,7 +200,7 @@ async function main() {
   console.log('Created cart with items')
 
   // Create Sample Order
-  const order = await prisma.order.create({
+  const _order = await prisma.order.create({
     data: {
       userId: testUser.id,
       subtotal: 12940,

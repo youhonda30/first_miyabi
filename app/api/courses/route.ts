@@ -51,7 +51,7 @@ export async function GET(req: Request) {
     }
 
     // Build order by clause
-    let orderBy: any = {}
+    const orderBy: any = {}
     if (sortBy === 'price') {
       orderBy.price = sortOrder
     } else if (sortBy === 'duration') {

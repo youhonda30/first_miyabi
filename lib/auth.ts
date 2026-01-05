@@ -107,7 +107,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   events: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account: _account, profile: _profile }) {
       // Log sign in events
       console.log(`User signed in: ${user.email}`)
     },

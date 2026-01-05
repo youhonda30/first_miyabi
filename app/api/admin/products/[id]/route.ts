@@ -54,7 +54,7 @@ export async function DELETE(
     const { id } = await params
     await prisma.product.delete({ where: { id } })
     return NextResponse.json({ message: '削除しました' })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: '削除に失敗しました' }, { status: 500 })
   }
 }
